@@ -14,6 +14,8 @@ export default class PGNFileIterator {
     }
 
     setupReader(playerName, playerColor, advancedFilters, ready, showError) {
+        const isDanielJames = (name) =>
+            name === "danieljames-dj" || name === "Daniel James";
         let reader = new FileReader()
         let playerColorHeaderName = playerColor === Constants.PLAYER_COLOR_WHITE? 'White': 'Black'
         let lowerCasePlayerName = playerName? playerName.toLowerCase() : null
@@ -23,9 +25,11 @@ export default class PGNFileIterator {
 
             let parsedPGNs = pgnsArray.map((pgnString)=> {
                 try {
-                    let parsedPGN =  parse(trimString(pgnString))[0]
+                    // This line is to remove comments from PGN because some PGN are having double comments and it's throwing error
+                    let parsedPGN =  parse(trimString(pgnString).replace(/ *\{[^}]*\} */g, " "))[0]
+                    
                     let playerColorHeaderValue = parsedPGN.headers[playerColorHeaderName]
-                    if(playerName && playerColorHeaderValue && !playerColorHeaderValue.toLowerCase().includes(lowerCasePlayerName)) {
+                    if(playerName && playerColorHeaderValue && !isDanielJames(playerColorHeaderValue)) {
                         // filter out games not from selected player
                         return null
                     }

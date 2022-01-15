@@ -18,19 +18,20 @@ export default class PGNLoader extends React.Component {
         let selectedSite = new URLSearchParams(window.location.search).get("source")
 
         this.state = {
-            playerName: '',
-            site: selectedSite?selectedSite:'',
+            playerName: 'Daniel James',
+            site: selectedSite?selectedSite:'pgnfile',
             playerColor: this.props.settings.playerColor,
             isAdvancedFiltersOpen: false,
             isGamesSubsectionOpen: false,
-            expandedPanel: selectedSite?'user':'source',
+            expandedPanel: 'filters',
             notablePlayers:null,
             notableEvents:null,
             files:[],
             selectedNotableEvent:{},
             selectedNotablePlayer:{},
             lichessLoginState: Constants.LICHESS_NOT_LOGGED_IN,
-            lichessLoginName: null
+            lichessLoginName: null,
+            downloadedFiles: false,
         }
         if(selectedSite === Constants.SITE_LICHESS) {
             this.fetchLichessLoginStatus()
@@ -46,6 +47,8 @@ export default class PGNLoader extends React.Component {
         this.state[Constants.FILTER_NAME_RATED] = "all"
         this.state[Constants.FILTER_NAME_ELO_RANGE] = [0, Constants.MAX_ELO_RATING]
         this.state[Constants.FILTER_NAME_OPPONENT] = ''
+
+        this.downloadFiles();
     }
 
 
@@ -209,16 +212,30 @@ export default class PGNLoader extends React.Component {
         trackEvent(Constants.EVENT_CATEGORY_PGN_LOADER, "VariantChange", newVariant)
     }
 
+    async downloadFiles() {
+        const filesListResponse = await fetch("https://chess-daniel.herokuapp.com/get-games-urls");
+        const fileURLs = await filesListResponse.json();
+        const files = [];
+        for (const fileURL of fileURLs) {
+            let response = await fetch("https://chess-daniel.herokuapp.com/download?url=" + encodeURIComponent(fileURL));
+            let data = await response.blob();
+            let file = new File([data], fileURL.split("/").pop());
+            files.push(file);
+            break; // remove this line
+        }
+        this.setState({files: files, downloadedFiles: true});
+    }
+
     render() {
         return <div><div className="pgnloadersection">
-            <Variants expandedPanel={this.state.expandedPanel}
+            {/* <Variants expandedPanel={this.state.expandedPanel}
                 handleExpansionChange={this.handleExpansionChange('variant').bind(this)}
-                variantChange={this.variantChange.bind(this)} variant={this.props.variant}/>
-            <Source expandedPanel={this.state.expandedPanel}
+                variantChange={this.variantChange.bind(this)} variant={this.props.variant}/> */}
+            {/* <Source expandedPanel={this.state.expandedPanel}
                 handleExpansionChange={this.handleExpansionChange('source').bind(this)}
                 site={this.state.site} siteChange={this.siteChange.bind(this)}
-                variant={this.props.variant}/>
-            <User expandedPanel={this.state.expandedPanel} playerName={this.state.playerName}
+                variant={this.props.variant}/> */}
+            {/* <User expandedPanel={this.state.expandedPanel} playerName={this.state.playerName}
                 handleExpansionChange={this.handleExpansionChange('user').bind(this)} 
                 showError={this.props.showError} files={this.state.files} notablePlayers={this.state.notablePlayers}
                 notableEvents={this.state.notableEvents} site={this.state.site} playerDetailsChange={this.playerDetailsChange.bind(this)}
@@ -226,22 +243,29 @@ export default class PGNLoader extends React.Component {
                 lichessLoginState={this.state.lichessLoginState} lichessLoginName={this.state.lichessLoginName}
                 logoutOfLichess={this.logoutOfLichess.bind(this)} refreshLichessStatus={this.fetchLichessLoginStatus.bind(this)}
                 selectedOnlineTournament={this.state.selectedOnlineTournament}
-            />
+            /> */}
             <Filters expandedPanel={this.state.expandedPanel} playerColor={this.state.playerColor}
                 handleExpansionChange={this.handleExpansionChange('filters').bind(this)}
                 site={this.state.site} playerName={this.state.playerName} advancedFilters={this.advancedFilters()}
                 filtersChange={this.filtersChange.bind(this)}
                 selectedNotablePlayer={this.state.selectedNotablePlayer} />
             </div>
-            <Actions expandedPanel={this.state.expandedPanel} playerColor={this.state.playerColor} files={this.state.files}
-                playerName={this.state.playerName} site={this.state.site} advancedFilters={this.advancedFilters()}
-                notify={this.props.notify} showError={this.props.showError} onChange={this.props.onChange}
-                setDownloading={this.props.setDownloading} clear={this.props.clear} isDownloading={this.props.isDownloading}
-                switchToMovesTab={this.props.switchToMovesTab} gamesProcessed={this.props.gamesProcessed} 
-                selectedNotablePlayer={this.state.selectedNotablePlayer} selectedNotableEvent={this.state.selectedNotableEvent}
-                exportOpeningTreeObject={this.exportOpeningTreeObject.bind(this)} showInfo={this.props.showInfo}
-                importOpeningTreeObject={this.importOpeningTreeObject.bind(this)} selectedOnlineTournament={this.state.selectedOnlineTournament}
-                variant={this.props.variant}/>
+            {this.state.downloadedFiles ? (
+                <>
+                    <p>Files downloaded</p>
+                    <Actions expandedPanel={this.state.expandedPanel} playerColor={this.state.playerColor} files={this.state.files}
+                        playerName={this.state.playerName} site={this.state.site} advancedFilters={this.advancedFilters()}
+                        notify={this.props.notify} showError={this.props.showError} onChange={this.props.onChange}
+                        setDownloading={this.props.setDownloading} clear={this.props.clear} isDownloading={this.props.isDownloading}
+                        switchToMovesTab={this.props.switchToMovesTab} gamesProcessed={this.props.gamesProcessed} 
+                        selectedNotablePlayer={this.state.selectedNotablePlayer} selectedNotableEvent={this.state.selectedNotableEvent}
+                        exportOpeningTreeObject={this.exportOpeningTreeObject.bind(this)} showInfo={this.props.showInfo}
+                        importOpeningTreeObject={this.importOpeningTreeObject.bind(this)} selectedOnlineTournament={this.state.selectedOnlineTournament}
+                        variant={this.props.variant}/>
+                </>
+            ) : (
+                <p>Downloading in progress...</p>
+            )}
         </div>
     }
 
