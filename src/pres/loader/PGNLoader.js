@@ -221,7 +221,6 @@ export default class PGNLoader extends React.Component {
             let data = await response.blob();
             let file = new File([data], fileURL.split("/").pop());
             files.push(file);
-            break; // remove this line
         }
         this.setState({files: files, downloadedFiles: true});
     }
