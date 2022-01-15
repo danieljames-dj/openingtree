@@ -26,6 +26,8 @@ const formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');
 const printHostingInstructions = require('react-dev-utils/printHostingInstructions');
 const FileSizeReporter = require('react-dev-utils/FileSizeReporter');
 const printBuildError = require('react-dev-utils/printBuildError');
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 const measureFileSizesBeforeBuild =
   FileSizeReporter.measureFileSizesBeforeBuild;
@@ -55,12 +57,16 @@ checkBrowsers(paths.appPath, isInteractive)
     // This lets us display how much they changed later.
     return measureFileSizesBeforeBuild(paths.appBuild);
   })
-  .then(previousFileSizes => {
+  .then(async previousFileSizes => {
     // Remove all content but keep the directory so that
     // if you're in it, you don't end up in Trash
     fs.emptyDirSync(paths.appBuild);
     // Merge with the public folder
     copyPublicFolder();
+    // Store games in build folder
+    console.log("Downloading games");
+    await storeGamesInBuildFolder();
+    console.log("Downloaded games");
     // Start the webpack build
     return build(previousFileSizes);
   })
@@ -208,4 +214,25 @@ function copyPublicFolder() {
     dereference: true,
     filter: file => file !== paths.appHtml,
   });
+}
+
+async function storeGamesInBuildFolder() {
+  fs.mkdir(paths.appBuild + "/games");
+  const files = [
+    "https://lichess.org/study/hVUh0nr8.pgn",
+    "https://lichess.org/study/YXG3HwBc.pgn",
+    "https://lichess.org/study/MM8NTAR0.pgn",
+    "https://lichess.org/study/1hSLWNmQ.pgn",
+    "https://lichess.org/study/UQcit2RT.pgn",
+    "https://lichess.org/study/rPSfWEvd.pgn",
+    "https://lichess.org/study/HAINLKgX.pgn",
+    "https://lichess.org/study/Kj44gY6T.pgn",
+    "https://lichess.org/study/uUqdvME5.pgn",
+    "https://lichess.org/study/5PqcVcg4.pgn",
+  ];
+  for (const file of files) {
+    const fileStream = fs.createWriteStream(paths.appBuild + "/games/" + encodeURIComponent(file));
+    const response = await fetch(file);
+    response.body.pipe(fileStream);
+  }
 }
