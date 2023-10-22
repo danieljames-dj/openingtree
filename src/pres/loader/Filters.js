@@ -84,6 +84,7 @@ export default class Filters extends React.Component {
         }
         this.setState({colorError:"", isAdvancedFiltersOpen:false})
         this.props.filtersChange(this.state)
+        this.props.loadFunction()
     }
     getSummary(isDisabled) {
         if(this.props.playerColor && !isDisabled) {

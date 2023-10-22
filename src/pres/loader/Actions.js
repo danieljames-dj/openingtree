@@ -26,6 +26,7 @@ export default class Actions extends React.Component {
         }
         streamsaver.mitm = "download/download-mitm.html"
         this.encoder = new TextEncoder()
+        props.loadFunctionInit(this.load.bind(this))
 
     }
     unload = () => {
@@ -159,6 +160,7 @@ export default class Actions extends React.Component {
         this.props.onChange("playerColor", this.props.playerColor)
         this.readPgn(false)
         this.props.setDownloading(true)
+        this.props.switchToMovesTab()
         trackEvent(Constants.EVENT_CATEGORY_MAIN_ACTION, "Load", this.props.site, this.props.playerColor === Constants.PLAYER_COLOR_WHITE ? 1 : 0)
     }
     stopDownloading() {
@@ -188,7 +190,7 @@ export default class Actions extends React.Component {
                                         this.props.gamesProcessed, 
                                         this.props.isDownloading)
         return <div>
-        <div className="pgnloadersection"><MaterialUIButton
+        {/* <div className="pgnloadersection"><MaterialUIButton
             onClick={this.load.bind(this)}
             variant="contained"
             color="primary"
@@ -218,7 +220,7 @@ export default class Actions extends React.Component {
                 >
                     {this.state.exportingInProgress?"Saving to file":"Save .tree file"}
                 </MaterialUIButton></span></Tooltip></div>
-            }
+            } */}
         {
             this.state.isGamesSubsectionOpen ?
                 <div>

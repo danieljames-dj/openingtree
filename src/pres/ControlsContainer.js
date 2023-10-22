@@ -168,6 +168,7 @@ export default class ControlsContainer extends React.Component {
               variant={this.props.variant}
               variantChange={this.props.variantChange}
               oauthManager={this.props.oauthManager}
+              updateLoadingParams={this.props.updateLoadingParams}
               />
             </TabPane>
         <TabPane tabId="moves">
