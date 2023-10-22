@@ -4,3 +4,5 @@ build/
 test/
 dist/
 yarn-error.log
+public/games
+.env

@@ -18,19 +18,20 @@ export default class PGNLoader extends React.Component {
         let selectedSite = new URLSearchParams(window.location.search).get("source")
 
         this.state = {
-            playerName: '',
-            site: selectedSite?selectedSite:'',
+            playerName: 'Daniel James',
+            site: selectedSite?selectedSite:'pgnfile',
             playerColor: this.props.settings.playerColor,
             isAdvancedFiltersOpen: false,
             isGamesSubsectionOpen: false,
-            expandedPanel: selectedSite?'user':'source',
+            expandedPanel: 'filters',
             notablePlayers:null,
             notableEvents:null,
             files:[],
             selectedNotableEvent:{},
             selectedNotablePlayer:{},
             lichessLoginState: Constants.LICHESS_NOT_LOGGED_IN,
-            lichessLoginName: null
+            lichessLoginName: null,
+            loadFunction: () => null,
         }
         if(selectedSite === Constants.SITE_LICHESS) {
             this.fetchLichessLoginStatus()
@@ -46,6 +47,8 @@ export default class PGNLoader extends React.Component {
         this.state[Constants.FILTER_NAME_RATED] = "all"
         this.state[Constants.FILTER_NAME_ELO_RANGE] = [0, Constants.MAX_ELO_RATING]
         this.state[Constants.FILTER_NAME_OPPONENT] = ''
+
+        this.downloadFiles();
     }
 
 
@@ -209,9 +212,32 @@ export default class PGNLoader extends React.Component {
         trackEvent(Constants.EVENT_CATEGORY_PGN_LOADER, "VariantChange", newVariant)
     }
 
+    async downloadFiles() {
+        const countFileResponse = await fetch("games/count.json");
+        const count = JSON.parse(await countFileResponse.text()).count;
+        const files = [];
+        for (let i = 0; i < count; i++) {
+            let response = await fetch(`games/${i}`);
+            let data = await response.blob();
+            let file = new File([data], `${i}.pgn`);
+            files.push(file);
+            this.props.updateLoadingParams({
+                loading: true,
+                message: `Loading games... (${Math.round((i+1) * 100 / count)}%)`
+            })
+        }
+        this.setState({
+            files: files
+        })
+        this.props.updateLoadingParams({
+            loading: false,
+            message: `Games loaded`
+        })
+    }
+
     render() {
         return <div><div className="pgnloadersection">
-            <Variants expandedPanel={this.state.expandedPanel}
+            {/* <Variants expandedPanel={this.state.expandedPanel}
                 handleExpansionChange={this.handleExpansionChange('variant').bind(this)}
                 variantChange={this.variantChange.bind(this)} variant={this.props.variant}/>
             <Source expandedPanel={this.state.expandedPanel}
@@ -226,12 +252,12 @@ export default class PGNLoader extends React.Component {
                 lichessLoginState={this.state.lichessLoginState} lichessLoginName={this.state.lichessLoginName}
                 logoutOfLichess={this.logoutOfLichess.bind(this)} refreshLichessStatus={this.fetchLichessLoginStatus.bind(this)}
                 selectedOnlineTournament={this.state.selectedOnlineTournament} oauthManager={this.props.oauthManager}
-            />
+            /> */}
             <Filters expandedPanel={this.state.expandedPanel} playerColor={this.state.playerColor}
                 handleExpansionChange={this.handleExpansionChange('filters').bind(this)}
                 site={this.state.site} playerName={this.state.playerName} advancedFilters={this.advancedFilters()}
                 filtersChange={this.filtersChange.bind(this)}
-                selectedNotablePlayer={this.state.selectedNotablePlayer} />
+                selectedNotablePlayer={this.state.selectedNotablePlayer} loadFunction={this.state.loadFunction} />
             </div>
             <Actions expandedPanel={this.state.expandedPanel} playerColor={this.state.playerColor} files={this.state.files}
                 playerName={this.state.playerName} site={this.state.site} advancedFilters={this.advancedFilters()}
@@ -241,7 +267,7 @@ export default class PGNLoader extends React.Component {
                 selectedNotablePlayer={this.state.selectedNotablePlayer} selectedNotableEvent={this.state.selectedNotableEvent}
                 exportOpeningTreeObject={this.exportOpeningTreeObject.bind(this)} showInfo={this.props.showInfo}
                 importOpeningTreeObject={this.importOpeningTreeObject.bind(this)} selectedOnlineTournament={this.state.selectedOnlineTournament}
-                variant={this.props.variant}/>
+                variant={this.props.variant} loadFunctionInit={(loadFunction) => this.setState({loadFunction: loadFunction})}/>
         </div>
     }
 

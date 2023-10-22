@@ -26,6 +26,8 @@ const formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');
 const printHostingInstructions = require('react-dev-utils/printHostingInstructions');
 const FileSizeReporter = require('react-dev-utils/FileSizeReporter');
 const printBuildError = require('react-dev-utils/printBuildError');
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 const measureFileSizesBeforeBuild =
   FileSizeReporter.measureFileSizesBeforeBuild;
@@ -55,12 +57,16 @@ checkBrowsers(paths.appPath, isInteractive)
     // This lets us display how much they changed later.
     return measureFileSizesBeforeBuild(paths.appBuild);
   })
-  .then(previousFileSizes => {
+  .then(async previousFileSizes => {
     // Remove all content but keep the directory so that
     // if you're in it, you don't end up in Trash
     fs.emptyDirSync(paths.appBuild);
     // Merge with the public folder
     copyPublicFolder();
+    // Store games in build folder
+    console.log("Downloading games");
+    await storeGamesInBuildFolder();
+    console.log("Downloaded games");
     // Start the webpack build
     return build(previousFileSizes);
   })
@@ -208,4 +214,33 @@ function copyPublicFolder() {
     dereference: true,
     filter: file => file !== paths.appHtml,
   });
+}
+
+async function storeGamesInBuildFolder() {
+  const downloadPath = process.env.DOWNLOAD_PATH;
+  const gamesPath = paths.appBuild + "/games";
+  const backupPath = paths.appBuild + '/backup/Games/';
+  const backupZipPath = paths.appBuild + "/backup.zip";
+  const response = await fetch(downloadPath);
+  const fileStream = fs.createWriteStream(backupZipPath);
+  await new Promise((resolve, reject) => {
+    response.body.pipe(fileStream);
+    response.body.on("error", reject);
+    fileStream.on("finish", resolve);
+  });
+  var AdmZip = require("adm-zip");
+  var zip = new AdmZip(backupZipPath);
+  zip.extractAllTo(paths.appBuild + "/backup", true);
+  fs.rmSync(gamesPath, {recursive: true, force: true})
+  fs.mkdir(gamesPath);
+  const files = fs.readdirSync(backupPath);
+  let count = 0;
+  for(const file of files) {
+    fs.renameSync(backupPath + file, gamesPath + `/${count++}`);
+  }
+  fs.writeFileSync(gamesPath + "/count.json", JSON.stringify({
+    count: files.length
+  }));
+  fs.removeSync(`${paths.appBuild}/backup`, {recursive: true, force: true});
+  fs.removeSync(`${paths.appBuild}/backup.zip`);
 }

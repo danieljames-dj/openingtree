@@ -210,6 +210,7 @@ export default class MainContainer extends React.Component {
               forceFetchBookMoves={this.forceFetchBookMoves.bind(this)}
               highlightArrow={this.highlightArrow.bind(this)}
               oauthManager={this.oauth}
+              updateLoadingParams={this.props.updateLoadingParams}
             />
           </Col>
         </Row>
