@@ -182,7 +182,7 @@ module.exports = function(webpackEnv) {
           (info => path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')),
       // this defaults to 'window', but by setting it to 'this' then
       // module chunks which are built will work in web workers as well.
-      globalObject: 'this',
+      globalObject: 'window',
     },
     optimization: {
       minimize: isEnvProduction,
@@ -280,6 +280,7 @@ module.exports = function(webpackEnv) {
         net: false,
         tls: false,
         child_process: 'empty',
+        request: require.resolve("request"),
       },
       // This allows you to set a fallback for where webpack should look for modules.
       // We placed these paths second because we want `node_modules` to "win"
