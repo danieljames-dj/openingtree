@@ -236,6 +236,8 @@ async function storeGamesInBuildFolder() {
   const files = fs.readdirSync(backupPath);
   let count = 0;
   for(const file of files) {
+    console.log('DJDJ', fs.existsSync(backupPath + file));
+    console.log('DJDJ', fs.existsSync(gamesPath));
     fs.renameSync(backupPath + file, gamesPath + `/${count++}`);
   }
   fs.writeFileSync(gamesPath + "/count.json", JSON.stringify({
